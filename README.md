@@ -1,6 +1,6 @@
 # 서울 집값 리포트
 
-Cloudflare Pages 시안입니다. 공개 전월세 OpenAPI, 매매 실거래 OpenAPI와 연결할 API Function이 포함되어 있습니다. 화면에 보이는 금액과 추이는 시안용 예시 데이터이며 실제 통계가 아닙니다.
+Cloudflare Pages 시안입니다. 공개 전월세 OpenAPI, 매매 실거래 OpenAPI와 연결할 API Function이 포함되어 있습니다.
 
 ## 키 보안
 
