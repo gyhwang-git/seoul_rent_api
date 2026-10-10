@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7f7f4" />
+  <title>최근 5년간 서울시 전세/매매가 변화</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{--ink:#172823;--muted:#7d8981;--line:#e5e8e2;--paper:#fff;--bg:#f7f7f4;--green:#246d51;--mint:#e8f2eb;--orange:#d7794c;--shadow:0 14px 36px #233d2b0b}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,"Noto Sans KR",sans-serif;letter-spacing:-.035em}
+    header{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(28px,calc((100vw - 1440px)/2));}.brand{display:flex;gap:10px;align-items:center;font-size:13px;font-weight:800;letter-spacing:-.02em}.mark{width:30px;height:30px;background:#214d3b;border-radius:9px;color:#d8f0df;display:grid;place-items:center;font-size:17px}.header-right{display:flex;align-items:center;gap:18px;font-size:11px;color:var(--muted)}.preview-tag{font-size:10px;color:#7b6338;background:#f8f0df;padding:7px 10px;border-radius:20px;font-weight:700}
+    main{max-width:1440px;margin:auto;padding:36px 30px 50px}.title-row{display:flex;justify-content:space-between;align-items:end;margin-bottom:23px}.eyebrow{font:500 10px "DM Mono",monospace;letter-spacing:.15em;color:var(--green);text-transform:uppercase;margin-bottom:10px}.title-row h1{font-size:29px;letter-spacing:-.07em;margin:0 0 7px;font-weight:800}.title-row p{font-size:12px;color:var(--muted);margin:0}.period{font:11px "DM Mono",monospace;border:1px solid var(--line);border-radius:7px;background:#fff;padding:10px 12px;color:#69766d}
+    .stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:15px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px;min-height:106px;box-shadow:var(--shadow)}.stat-label{font-size:11px;color:var(--muted);font-weight:700}.stat-value{font-size:23px;font-weight:800;letter-spacing:-.065em;margin-top:7px}.stat-value small{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:4px}.stat-change{font:10px "DM Mono",monospace;color:var(--green);margin-left:7px}.stat-context{font-size:11px;color:var(--muted);margin:7px 0 0}.stat-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:11px}.stat-metric{min-width:0;padding-left:9px;border-left:2px solid #e8f2eb}.stat-metric span{display:block;font-size:10px;color:var(--muted);white-space:nowrap}.stat-metric strong{display:block;margin-top:3px;color:var(--green);font:700 15px "DM Mono",monospace}.stat-ratio{margin-top:9px;font:800 25px "DM Mono",monospace;color:var(--green)}.stat-ratio small{font:500 11px "Noto Sans KR",sans-serif;color:var(--muted)}.stat-footnote{margin-top:5px;font-size:10px;color:var(--muted)}
+    .dashboard{display:grid;grid-template-columns:minmax(0,1fr) 314px;gap:14px;align-items:stretch}.main-col{min-width:0}.panel{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow)}.map-panel{overflow:hidden}.panel-top{height:60px;border-bottom:1px solid var(--line);padding:0 18px;display:flex;align-items:center;justify-content:space-between}.panel-title{font-size:13px;font-weight:800}.panel-note{font-size:10px;color:var(--muted);margin-top:3px}.segmented{display:flex;gap:4px;padding:4px;background:#f3f5f1;border-radius:8px}.segmented button{border:0;background:transparent;padding:7px 12px;font:700 10px "Noto Sans KR";border-radius:6px;color:#6d7b71;cursor:pointer}.segmented button.active{background:#fff;color:#225e45;box-shadow:0 1px 4px #182b1d18}.map{height:473px;position:relative;overflow:hidden;background:#edf1eb;background-image:radial-gradient(#cad5c9 0.7px,transparent .7px);background-size:17px 17px}.map:before{content:"";position:absolute;width:240px;height:580px;right:14%;top:-50px;background:#dbe9de;border-radius:47% 37% 55% 41%;transform:rotate(37deg);opacity:.9}.river{position:absolute;width:120%;height:62px;left:-10%;top:52%;background:#c7dde0;transform:rotate(-18deg);border:1px solid #b8d1d4;border-left:0;border-right:0;z-index:1}.river-label{position:absolute;z-index:2;top:47%;left:48%;font-size:9px;color:#658994;letter-spacing:.08em;transform:rotate(-18deg)}.road{position:absolute;z-index:2;height:1px;background:#fff;box-shadow:0 0 0 1px #d9ded7;transform-origin:left}.districts{position:absolute;inset:0;z-index:3}.ward{position:absolute;width:57px;height:45px;border-radius:55% 46% 54% 42%;display:grid;place-items:center;text-align:center;cursor:pointer;border:1px solid #ffffffd9;color:#244739;font-size:8px;font-weight:700;line-height:1.25;box-shadow:0 2px 6px #39543e20;transition:transform .16s,filter .16s}.ward:hover,.ward.selected{transform:scale(1.14);z-index:5;filter:saturate(1.12);outline:2px solid #fff;box-shadow:0 3px 14px #193f2b45}.ward em{font:8px "DM Mono",monospace;font-style:normal;opacity:.85}.map-label{position:absolute;z-index:5;left:17px;top:15px;background:#ffffffeb;border:1px solid #e5e9e2;border-radius:7px;padding:9px 11px;font-size:10px;box-shadow:0 3px 9px #1a342313}.map-label b{font-size:11px;display:block}.map-label span{color:var(--muted);font-size:9px}.map-credit{position:absolute;right:11px;bottom:9px;z-index:4;color:#78847b;background:#ffffffc7;padding:4px 6px;font-size:8px}.map-legend{position:absolute;left:15px;bottom:14px;z-index:5;background:#ffffffec;border:1px solid #e2e8e0;border-radius:8px;padding:10px 12px;width:182px}.legend-top{display:flex;justify-content:space-between;font-size:9px;font-weight:700;margin-bottom:7px}.gradient{height:6px;border-radius:4px;background:linear-gradient(90deg,#b6d7b7,#e8cf78,#df8959,#a8433f)}.ticks{display:flex;justify-content:space-between;color:#849087;font:8px "DM Mono",monospace;margin-top:5px}.selects{display:flex;gap:7px}.selects select{border:1px solid var(--line);border-radius:6px;background:#fff;padding:8px 25px 8px 9px;font:10px "Noto Sans KR";color:#38493e;outline:none}.map-caption{padding:9px 14px;background:#fbfcfa;border-top:1px solid var(--line);font-size:9px;color:#859087}.lower{margin-top:14px;padding:16px 18px 13px}.chart-head{display:flex;justify-content:space-between;align-items:start}.chart-title{font-size:13px;font-weight:800}.chart-sub{font-size:10px;color:var(--muted);margin-top:4px}.chart-key{display:flex;gap:13px;color:#66736a;font-size:9px}.chart-key span{display:flex;align-items:center;gap:5px}.key-dot{width:7px;height:7px;border-radius:50%;background:#31795a}.key-dot.orange{background:#db8558}.chart-wrap{height:198px;margin-top:9px;position:relative}.chart-wrap svg{width:100%;height:100%;overflow:visible}.gridline{stroke:#e9ede8;stroke-width:1}.axis{fill:#8a958c;font:9px "DM Mono",monospace}.line-a{fill:none;stroke:#31795a;stroke-width:2.5}.line-b{fill:none;stroke:#db8558;stroke-width:2.5}.fill-a{fill:url(#areaA);opacity:.4}.point-a{fill:#fff;stroke:#31795a;stroke-width:2}.right-col{display:flex;flex-direction:column;min-height:0}.side{flex:1;overflow:hidden;display:flex;flex-direction:column}.side-head{padding:16px 16px 12px;border-bottom:1px solid var(--line)}.side-head-row{display:flex;justify-content:space-between;align-items:center}.side-head h2{font-size:13px;margin:0}.side-head button{border:0;background:transparent;color:var(--green);font:700 9px "Noto Sans KR";cursor:pointer}.side-sub{font-size:9px;color:var(--muted);margin-top:5px}.ward-list{overflow:auto;flex:1}.item{padding:12px 15px;border-bottom:1px solid #eff1ed;cursor:pointer}.item:hover,.item.selected{background:#f5f8f4}.item-top{display:flex;align-items:center;gap:8px}.rank{font:10px "DM Mono",monospace;color:#92a097;width:16px}.item-name{font-size:10px;font-weight:700;flex:1}.trend{font:9px "DM Mono",monospace;color:#287050}.item-detail{display:flex;justify-content:space-between;align-items:baseline;margin:7px 0 0 24px}.price{font:500 14px "DM Mono",monospace;letter-spacing:-.04em}.price small{font:9px "Noto Sans KR";color:var(--muted)}.transactions{font-size:8px;color:#89938c}.mini-bar{height:3px;background:#edf0eb;margin:8px 0 0 24px;border-radius:4px}.mini-bar i{display:block;height:100%;border-radius:4px;background:#68a780}.source{padding:12px 15px;border-top:1px solid var(--line);background:#fafbf9;font-size:8px;color:#879188;line-height:1.6}.disclaimer{margin-top:13px;border:1px solid #efe4cb;background:#fffbf1;color:#8b7040;border-radius:7px;padding:9px 12px;font-size:9px;line-height:1.5}
+    @media(max-width:950px){main{padding:28px 18px}.dashboard{grid-template-columns:minmax(0,1fr) 265px}.map{height:420px}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){header{height:57px;padding:0 14px}.header-right .meta{display:none}main{padding:23px 12px 36px}.title-row{align-items:start;gap:14px;flex-direction:column}.title-row h1{font-size:24px}.stats{gap:8px}.stat{min-height:78px;padding:11px}.stat-value{font-size:19px}.dashboard{display:flex;flex-direction:column}.map{height:410px}.right-col{height:450px}.panel-top{padding:0 11px}.panel-note{max-width:135px}.segmented button{padding:7px 8px}.selects select{padding-right:15px}.ward{width:48px;height:39px;font-size:7px}.map-legend{width:160px}.lower{padding:14px 12px}.chart-wrap{height:170px}.chart-key{gap:8px}.period{font-size:9px}}
+    .map{background:#e9eee9}.map:before,.river,.river-label,.road,.districts{display:none!important}.leaflet-container{font-family:"Noto Sans KR",sans-serif}.leaflet-control-attribution{font-size:8px!important}.leaflet-control-zoom a{color:#315846!important}.ward-pin{width:61px;height:46px;border:1px solid #ffffffed;border-radius:50% 46% 50% 45%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#244739;font:700 9px "Noto Sans KR";box-shadow:0 2px 8px #39543e38;cursor:pointer;transition:transform .16s,box-shadow .16s}.ward-pin span{font:8px "DM Mono",monospace;margin-top:1px}.ward-pin.selected{outline:2px solid #fff;box-shadow:0 3px 14px #193f2b63;transform:scale(1.1)}.ward-pin:hover{filter:saturate(1.15);transform:scale(1.08)}
+    .gu-name-icon{background:transparent;border:0}.gu-name{display:block;width:100px;text-align:center;white-space:nowrap;color:#173d2b;font:800 13px "Noto Sans KR",sans-serif;letter-spacing:.02em;text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,-1.5px 1.5px 0 #fff,1.5px 1.5px 0 #fff,0 1px 4px #fff}.leaflet-tooltip.dong-label{border:0;border-radius:3px;background:transparent;box-shadow:none;color:#263b30;padding:0;font:700 9px "Noto Sans KR",sans-serif;white-space:nowrap}.leaflet-tooltip.dong-label:before{display:none}
+
+    .dashboard{grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:stretch}.main-col{min-width:0}.right-col{display:flex;flex-direction:column;gap:12px;min-height:473px;height:auto}.trend-card{padding:15px 16px;min-height:230px;display:flex;flex-direction:column}.trend-card-head{display:flex;justify-content:space-between;align-items:start}.trend-index{font:500 9px "DM Mono",monospace;color:#56806a;letter-spacing:.1em}.trend-card h2{font-size:13px;margin:4px 0 2px}.trend-card p{font-size:9px;color:var(--muted);margin:0}.trend-badge{font-size:8px;background:#f8f0df;color:#806839;border-radius:20px;padding:5px 8px}.trend-card select{border:1px solid var(--line);border-radius:6px;background:white;padding:6px 18px 6px 8px;font:9px "Noto Sans KR";color:#38493e;max-width:92px}.trend-values{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}.trend-values div{background:#f8faf7;border:1px solid #edf0eb;border-radius:7px;padding:8px}.trend-values span{display:block;font-size:8px;color:var(--muted)}.trend-values strong{font:700 16px "DM Mono",monospace;display:inline-block;margin-top:3px}.trend-values small{font-size:8px;color:var(--muted);margin-left:3px}.spark-legend{display:flex;gap:12px;margin:9px 0 0 auto;font-size:8px;color:#728076}.spark-legend span{display:flex;align-items:center;gap:4px}.spark-legend i{display:inline-block;width:10px;height:2px;background:#31795a}.spark-legend span+span i{background:#db8558}.mini-trend{width:100%;height:66px;margin-top:auto;overflow:visible}.mini-trend line{stroke:#e8ece7;stroke-width:1}.mini-trend text{fill:#89948b;font:8px "DM Mono",monospace}.mini-trend path{fill:none;stroke-width:2}.mini-trend .rent-line{stroke:#31795a}.mini-trend .sale-line{stroke:#db8558}.region-panel{margin-top:14px;flex:none;max-height:430px}.region-panel .ward-list{max-height:345px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start;overflow:auto}.region-panel .item{min-width:0}.region-panel .item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    @media(max-width:950px){.dashboard{grid-template-columns:minmax(0,1fr) 300px}.right-col{min-height:473px}.region-panel .ward-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:680px){.dashboard{display:flex;flex-direction:column}.right-col{height:auto;min-height:0;display:grid;grid-template-columns:1fr}.trend-card{min-height:215px}.region-panel{max-height:390px}.region-panel .ward-list{max-height:310px;grid-template-columns:1fr}}
+  </style>
+  <style>
+    .spark-legend span:first-child i{width:8px;height:8px;border-radius:2px;background:#90bfa0}
+    .mini-trend{height:76px}
+    .mini-trend .scale-label{fill:#738177;font:7px "DM Mono",monospace}
+    .mini-trend .sale-scale{fill:#b96b43}
+    .mini-trend .rent-bars rect{fill:#90bfa0;opacity:.8}
+    .mini-trend .sale-line{fill:none;stroke:#db8558;stroke-width:2.5}
+    .mini-trend .sale-points circle{fill:#fff;stroke:#db8558;stroke-width:1.8}
+    .region-panel .ward-list{display:grid;grid-template-columns:1fr;align-content:start;max-height:345px;overflow:auto}
+    .region-panel .item{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);grid-template-rows:auto auto;align-items:center;gap:4px 18px;padding:11px 18px}
+    .region-panel .item-top{grid-column:1;grid-row:1/3;min-width:0}
+    .region-panel .item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .region-panel .item-detail{grid-column:2;grid-row:1;margin:0;justify-content:space-between}
+    .region-panel .mini-bar{grid-column:2;grid-row:2;height:9px;margin:0;border-radius:6px;background:#eef2ed}
+    .region-panel .mini-bar i{min-width:6px;border-radius:6px;transition:width .25s ease}
+    .region-panel .price{font-size:13px;font-weight:700}
+    .region-panel .transactions{font-size:9px}
+    .region-panel .ward-list{display:block;width:100%;height:300px;max-height:300px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+    .area-bar-chart{display:block;width:100%;max-width:100%;height:286px}
+    .area-bar-chart .bar-grid{stroke:#e8ece7;stroke-width:1}
+    .area-bar-chart .bar-axis-title,.area-bar-chart .bar-axis-tick{fill:#78857c;font:9px "DM Mono",monospace}
+    .area-bar-chart .bar-value{fill:#32463a;font:700 9px "DM Mono",monospace}
+    .area-bar-chart .bar-gu{fill:#89948b;font:7px "Noto Sans KR",sans-serif}
+    .area-bar-chart .bar-dong{fill:#263b30;font:700 8px "Noto Sans KR",sans-serif}
+    .area-bar-chart .bar-rank{fill:#94a097;font:7px "DM Mono",monospace}
+    .area-bar-chart .bar-x-title{fill:#77847b;font:9px "Noto Sans KR",sans-serif}
+    .area-bar-chart .bar-column{cursor:pointer;outline:none}
+    .area-bar-chart .bar-column rect{opacity:.82;transition:opacity .16s,filter .16s}
+    .area-bar-chart .bar-column:hover rect,.area-bar-chart .bar-column.selected rect,.area-bar-chart .bar-column:focus rect{opacity:1;filter:saturate(1.15);stroke:#244d39;stroke-width:2}
+    .comparison-card{gap:0}
+    .comparison-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:14px}
+    .comparison-values div{min-width:0;padding:8px 7px;background:#f8faf7;border:1px solid #edf0eb;border-radius:7px}
+    .comparison-values span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;font-weight:700}
+    .comparison-values small{display:block;margin-top:5px;white-space:nowrap;font-size:7px;color:var(--muted)}
+    .comparison-values b{font:700 8px "DM Mono",monospace;color:var(--ink)}
+    .comparison-legend{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px 12px;margin:11px 0 0;font-size:8px;color:#728076}
+    .comparison-legend span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .comparison-legend i{width:13px;height:0;border-top:2.5px solid #31795a}
+    .comparison-legend .city-sale-key{border-top-style:dashed}
+    .comparison-legend .district-rent-key,.comparison-legend .district-sale-key{border-color:#db8558}
+    .comparison-legend .district-sale-key{border-top-style:dashed}
+    .comparison-chart{width:100%;height:1px;min-height:240px;flex:1;margin-top:4px;overflow:visible}
+    .comparison-chart line{stroke:#e7ece7;stroke-width:1}
+    .comparison-chart .scope-divider{stroke-dasharray:2 3}
+    .comparison-chart .dual-axis{font:7px "DM Mono",monospace}
+    .comparison-chart .rent-axis{fill:#668e71}
+    .comparison-chart .sale-axis{fill:#b96b43}
+    .comparison-chart .comparison-scale{font:7px "DM Mono",monospace}
+    .comparison-chart .scope-label{fill:#35493c;font:700 8px "Noto Sans KR",sans-serif}
+    .comparison-chart .comparison-line{fill:none;stroke-width:2.3}
+    .comparison-chart .city-rent-line{stroke:#31795a}
+    .comparison-chart .city-sale-line{stroke:#31795a;stroke-dasharray:5 3}
+    .comparison-chart .district-rent-line{stroke:#db8558}
+    .comparison-chart .district-sale-line{stroke:#db8558;stroke-dasharray:5 3}
+    .comparison-chart .comparison-points circle{fill:#fff;stroke-width:1.7}
+    .comparison-chart .comparison-points.city-rent-line circle,.comparison-chart .comparison-points.city-sale-line circle{stroke:#31795a}
+    .comparison-chart .comparison-points.district-rent-line circle,.comparison-chart .comparison-points.district-sale-line circle{stroke:#db8558}
+    .comparison-chart .year-label{fill:#89948b;font:7px "DM Mono",monospace}
+    .trend-table-wrap{margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
+    .trend-table-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:9px;font-weight:800}
+    .trend-table-title span{font-size:7px;font-weight:400;color:var(--muted)}
+    .trend-table{width:100%;border-collapse:collapse;font-size:8px}
+    .trend-table thead{color:var(--muted)}
+    .trend-table th,.trend-table td{padding:4px 5px;border-bottom:1px solid #eff1ed;text-align:right;font:8px "DM Mono","Noto Sans KR",sans-serif}
+    .trend-table th:first-child{text-align:left;font-family:"Noto Sans KR",sans-serif}
+    .trend-table tbody th{font-weight:600;color:#405047}
+    .trend-table tbody td{color:#34473b}
+    .table-area{font-weight:800}.table-area.city{color:#31795a}.table-area.district{color:#c8754e}
+    @media(max-width:680px){.region-panel .item{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:4px 9px;padding:10px 12px}}
+    .map-tools{display:flex;align-items:center;gap:10px;min-width:0}
+    .map-legend{position:static;flex:1 1 235px;width:235px;min-width:0;padding:0;border:0;background:transparent;box-shadow:none}
+    .gradient{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;height:8px;background:none;border-radius:0;overflow:hidden}
+    .gradient span{display:block}
+    .ticks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;font:7px "DM Mono",monospace;white-space:nowrap}
+    .ticks span{text-align:center}
+    .map{height:min(62vh,600px);min-height:500px}
+    .right-col{min-height:0}
+    .trend-card{flex:1}
+    @media(max-width:950px){.map{height:480px;min-height:480px}}
+    @media(max-width:680px){.map{height:410px;min-height:410px}.trend-card{flex:none}}
+    @media(max-width:680px){.panel-top{height:auto;min-height:60px;flex-wrap:wrap;padding:10px;gap:8px}.panel-top>div:first-child{flex:1 0 100%}.map-tools{width:100%;gap:7px}.map-legend{flex:1 1 auto;width:auto}.legend-top{font-size:8px;margin-bottom:3px}.ticks{font-size:6.5px;gap:0}.segmented{flex:none}.segmented button{padding:6px 7px}}
+    @media(min-width:951px){.dashboard{grid-template-columns:minmax(0,1fr) 390px}}
+    @media(min-width:681px) and (max-width:950px){.dashboard{grid-template-columns:minmax(0,1fr) 330px}}
+    .trend-card h2{font-size:15px}
+    .trend-card p,.comparison-values span{font-size:10px}
+    .comparison-values small,.comparison-values b{font-size:9px}
+    .comparison-legend{font-size:9px}
+    .comparison-chart .dual-axis,.comparison-chart .comparison-scale,.comparison-chart .year-label{font-size:8px}
+    .comparison-chart .scope-label{font-size:9px}
+    .trend-table{font-size:9px}
+    .trend-table th,.trend-table td{font-size:9px;padding:5px 6px}
+    .trend-table-title span{font-size:8px}
+  </style>
+  <style>
+    .stat-label{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+    .stat-context{font-size:15px;font-weight:600;color:#66736a}
+    .stat-metric span{font-size:14px;font-weight:600}
+    .stat-metric strong{font-size:25px}
+    .stat-ratio small{font-size:14px}
+    .stats{grid-template-columns:minmax(0,1.05fr) minmax(0,.8fr) minmax(0,1.4fr)}
+    .stat-metric span{font-size:14px;font-weight:600}
+    .stat-metric strong{font-size:25px}
+    .ratio-map-layout{display:block;margin-top:3px}
+    .living-map-card .living-map-wrap{max-width:none}
+    @media(min-width:681px) and (max-width:950px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.living-map-card{grid-column:1/-1}}
+    .regional-ratios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+    .regional-ratio{display:flex;align-items:baseline;justify-content:space-between;gap:5px;min-width:0}
+    .regional-ratio span{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+    .regional-ratio strong{font:700 15px "DM Mono",monospace;color:var(--green)}
+    .stat-ratio-card{min-width:0}
+    .ratio-map-layout{display:grid;grid-template-columns:minmax(115px,.4fr) minmax(0,1.6fr);gap:10px;align-items:center;margin-top:3px}
+    .ratio-summary{min-width:0}
+    .ratio-summary .stat-ratio{font-size:28px;white-space:nowrap}
+    .living-map-wrap{min-width:0}
+    .living-map-head{font-size:10px;font-weight:700;color:#65736a;margin-bottom:1px}
+    .living-zone-map{display:block;width:100%;height:170px;overflow:visible}
+    .living-zone-map path{stroke:none}
+    .living-zone-map text{font-family:"Noto Sans KR",sans-serif;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;fill:#20382a;font-weight:800;text-anchor:middle}
+    .living-zone-map .zone-name{font-size:11px}
+    .living-zone-map .zone-rate{font-family:"DM Mono",monospace;font-size:10px}
+    .zone-map-legend{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted)}
+    .zone-map-gradient{height:7px;flex:1;border-radius:5px;background:linear-gradient(90deg,#dcebd3,#efd28c,#dc9863,#c86c5b)}
+    .annual-change-wrap{margin-top:9px;padding-top:7px;border-top:1px solid var(--line)}
+    .annual-change-title{font-size:10px;font-weight:700;color:#65736a;margin-bottom:4px}
+    .annual-change-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9px}
+    .annual-change-table th,.annual-change-table td{padding:3px 2px;text-align:center;border-bottom:1px solid #eff1ed;white-space:nowrap}
+    .annual-change-table thead{color:var(--muted)}
+    .annual-change-table th:first-child,.annual-change-table tbody th{text-align:left;font-family:"Noto Sans KR",sans-serif}
+    .annual-change-table tbody th{font-weight:600;color:#405047}
+    .annual-change-table td{font:500 9px "DM Mono",monospace;color:#287050}
+    .summary-data-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:10px;font-size:9px}
+    .summary-data-table th,.summary-data-table td{padding:5px 2px;text-align:center;border-bottom:1px solid #eff1ed;white-space:nowrap}
+    .summary-data-table thead{color:var(--muted)}
+    .summary-data-table th:first-child,.summary-data-table tbody th{text-align:left;font-family:"Noto Sans KR",sans-serif}
+    .summary-data-table tbody th{font-weight:600;color:#405047}
+    .summary-data-table td{font:500 9px "DM Mono",monospace;color:#287050}
+    .summary-data-table.compact{margin-top:0;font-size:8px}
+    .summary-data-table.compact th,.summary-data-table.compact td{padding:4px 1px;font-size:8px}
+    .living-summary-layout{display:grid;grid-template-columns:minmax(125px,.7fr) minmax(0,1.7fr);gap:8px;align-items:start;margin-top:8px}
+    .living-map-card .living-zone-map{display:block;width:100%;height:auto;overflow:visible}
+    .living-zone-map .zone-name{font-size:20px}
+    .living-zone-map .zone-rate{font-family:"DM Mono",monospace;font-size:18px}
+    @media(max-width:680px){.stats{grid-template-columns:1fr}.stat{min-height:0}.stat-metrics{gap:14px}.living-summary-layout{grid-template-columns:1fr}.living-map-card .living-zone-map{max-width:240px;margin:0 auto}.summary-data-table.compact{margin-top:8px}}
+  </style>
+</head>
+<body>
+  <header><div class="header-right"><span class="preview-tag">시안 미리보기</span></div></header>
+  <main>
+    <section class="title-row"><div><h1>최근 5년간 서울시 전세/매매가 변화</h1><p>서울시 전체 25개 자치구, 426개 행정동의 가격 흐름 분석</p></div><div class="period">분석 기간　2022 — 2026</div></section>
+    <section class="stats">
+      <article class="stat"><div class="stat-label">5년 누적 변동률 <span class="stat-change">2022–2026 · 시안</span></div><div class="stat-metrics"><div class="stat-metric"><span>매매가</span><strong id="statSaleChange">—</strong></div><div class="stat-metric"><span>전세가</span><strong id="statJeonseChange">—</strong></div><div class="stat-metric"><span>월세가</span><strong id="statRentChange">—</strong></div></div><div class="stat-footnote">선택 지역 중앙값 기준</div><table class="summary-data-table" id="cumulativeChangeTable"></table></article>
+      <article class="stat stat-ratio-card"><div class="stat-label">5년 전세가율</div><div class="ratio-summary"><div class="stat-ratio"><span id="statJeonseRatio">—</span><small> 매매가 대비 전세가</small></div><div class="stat-footnote">2022–2026 평균 · 시안</div></div><table class="summary-data-table" id="jeonseRatioTable"></table></article>
+      <article class="stat stat-ratio-card living-map-card"><div class="stat-label">생활권별 5년 전세가율</div><div class="living-summary-layout"><div class="living-map-wrap"><div class="living-map-head">생활권역별 비율</div><svg id="livingZoneMap" class="living-zone-map" role="img" aria-label="서울시 생활권역별 5년 평균 전세가율 지도"></svg><div class="zone-map-legend"><span>낮음</span><div class="zone-map-gradient"></div><span>높음</span></div></div><table class="summary-data-table compact" id="livingZoneTable"></table></div></article>
+    </section>
+    <section class="dashboard"><div class="main-col"><section class="panel map-panel"><div class="panel-top"><div><div class="panel-title">행정동별 가격 분포</div><div class="panel-note">지도 색상은 선택한 항목의 평균 거래 금액대입니다</div></div><div class="map-tools"><div class="map-legend"><div class="legend-top"><span id="legendName">전세 보증금</span><span>금액대</span></div><div class="gradient"></div><div class="ticks"></div></div><div class="segmented" role="group" aria-label="지도 가격 유형"><button class="active" data-mode="jeonse">전세</button><button data-mode="rent">월세</button><button data-mode="sale">매매</button></div></div></div><div class="map" id="map"><div class="map-label"><b>서울특별시 · 426개 행정동</b><span>행정동별 가격 지도 · 시안</span></div><div class="districts" id="districts"></div><div class="map-credit">© OpenStreetMap · © CARTO</div></div><div class="map-caption">행정동 경계: vuski/admdongkor (2025-01-01) · 지도를 확대하면 행정동명이 표시됩니다.</div></section></div>
+<aside class="right-col">
+  <section class="panel trend-card comparison-card">
+    <div class="trend-card-head"><div><h2>서울시/자치구 최근 5년 전세/매매가</h2><p>최근 5년 가격 흐름 비교 · 시안 예시</p></div><span class="trend-badge">시안</span></div>
+    <div class="comparison-values">
+      <div><span id="cityTrendName">서울 전체</span><small>전세 <b id="cityTrendRent">—</b> · 매매 <b id="cityTrendSale">—</b>억</small></div>
+      <div><span id="districtTrendName">마포구</span><small>전세 <b id="districtTrendRent">—</b> · 매매 <b id="districtTrendSale">—</b>억</small></div>
+    </div>
+    <div class="comparison-legend"><span><i class="city-rent-key"></i>서울 전세</span><span><i class="city-sale-key"></i>서울 매매</span><span><i class="district-rent-key"></i><b id="districtRentLegend">마포구 전세</b></span><span><i class="district-sale-key"></i><b id="districtSaleLegend">마포구 매매</b></span></div>
+    <svg id="comparisonTrend" class="mini-trend comparison-chart" viewBox="0 0 340 286" preserveAspectRatio="none" role="img" aria-label="서울 전체와 선택 자치구의 최근 5년 전세 및 매매 선 그래프"></svg>
+    <div class="trend-table-wrap"><div class="trend-table-title"><span>단위: 억원 · 시안 예시값</span></div><table class="trend-table"><thead><tr><th scope="col">지역 · 유형</th><th scope="col">2022</th><th scope="col">2023</th><th scope="col">2024</th><th scope="col">2025</th><th scope="col">2026</th></tr></thead><tbody id="trendTableBody"></tbody></table></div>
+  </section>
+</aside></section>
+<section class="panel side region-panel"><div class="side-head"><div class="side-head-row"><h2>행정동별 부동산 실거래가</h2><button id="sort">1위부터 정렬 ↓</button></div><div class="side-sub">가격순 행정동 막대그래프 · 시안 예시값</div><div class="selects" style="margin-top:10px"><select id="gu" aria-label="자치구 선택"><option>마포구</option><option>성동구</option><option>강남구</option><option>송파구</option><option>용산구</option><option>노원구</option></select><select id="dong" aria-label="행정동 선택"><option>연남동</option><option>서교동</option><option>합정동</option><option>망원동</option><option>성산동</option></select></div></div><div class="ward-list" id="wardList"></div><div class="source">자료: 서울 열린데이터광장 부동산 전월세가·실거래가 정보<br/>가격은 전용면적 기준 비교값 · 갱신 주기 데이터셋 기준</div></section>
+    <div class="disclaimer">시안 화면입니다. 행정동별 가격과 그래프는 서울 전역 표현을 확인하기 위한 예시값이며 실제 통계가 아닙니다. 실제 2022–2026 서울시 전세·매매 실거래 집계와 행정동 코드 연결 후 공개해야 합니다.</div>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+const ALL = '서울시 전체';
+const map = L.map('map', { scrollWheelZoom: true, wheelDebounceTime: 40, wheelPxPerZoomLevel: 45 }).setView([37.566, 126.978], 10.5);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+fetch('/api/map-config').then(r => r.ok ? r.json() : null).then(config => {
+  const key = config?.cartoKey ? `?key=${encodeURIComponent(config.cartoKey)}` : '';
+  L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${key}`, {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+});
+
+let geoFeatures = [];
+let districtLayer = null;
+let guLabelLayer = null;
+let selectedGu = ALL;
+let selectedDong = ALL;
+let trendGu = '마포구';
+let mode = 'jeonse';
+let descending = true;
+const list = document.querySelector('#wardList');
+const baselines = {
+  '강남구':[8.0,19.2], '서초구':[7.8,18.6], '송파구':[6.3,15.1], '용산구':[7.0,17.0], '성동구':[6.5,14.2],
+  '마포구':[6.0,12.4], '광진구':[5.2,11.8], '종로구':[5.4,12.6], '중구':[5.2,11.6], '동작구':[5.0,10.8],
+  '영등포구':[4.8,10.9], '양천구':[4.7,10.0], '강동구':[4.8,11.2], '서대문구':[4.7,9.8], '강서구':[4.3,8.8],
+  '은평구':[4.2,8.5], '성북구':[4.1,8.2], '동대문구':[4.2,8.7], '관악구':[4.0,8.2], '구로구':[3.9,7.9],
+  '중랑구':[3.8,7.4], '금천구':[3.7,7.2], '강북구':[3.6,7.1], '노원구':[3.5,7.8], '도봉구':[3.4,7.0]
+};
+const sampleByCode = new Map();
+const fiveYearFactors = { jeonse: .82, rent: .82, sale: .78 };
+const annualPriceFactors = {
+  jeonse:[.82,.9,.95,.98,1],
+  rent:[.82,.9,.95,.98,1],
+  sale:[.78,.86,.93,.97,1]
+};
+const livingZones = {
+  '도심권':['종로구','중구','용산구'],
+  '동북권':['성동구','광진구','동대문구','중랑구','성북구','강북구','도봉구','노원구'],
+  '서북권':['은평구','서대문구','마포구'],
+  '서남권':['양천구','강서구','구로구','금천구','영등포구','동작구','관악구'],
+  '동남권':['서초구','강남구','송파구','강동구']
+};
+
+function dongName(feature) { return feature.properties.adm_nm.split(' ').at(-1); }
+function sampleFor(feature) { return sampleByCode.get(feature.properties.adm_cd2); }
+function valueFor(sample) { return mode === 'sale' ? sample.sale : mode === 'rent' ? sample.rent * .72 : sample.rent; }
+function median(values) { const sorted=[...values].sort((a,b)=>a-b),middle=Math.floor(sorted.length/2);return sorted.length%2?sorted[middle]:(sorted[middle-1]+sorted[middle])/2; }
+function renderComparisonTrend(areas) {
+  const rentFactors=annualPriceFactors.jeonse, saleFactors=annualPriceFactors.sale;
+  const rentSeries=areas.map(area=>rentFactors.map(factor=>area.rent*factor));
+  const saleSeries=areas.map(area=>saleFactors.map(factor=>area.sale*factor));
+  const rentMax=Math.ceil(Math.max(...rentSeries.flat())*1.16*2)/2;
+  const saleMax=Math.ceil(Math.max(...saleSeries.flat())*1.16*2)/2;
+  const plotTop=55,plotBottom=226,plotHeight=plotBottom-plotTop,xPositions=[56,113,170,227,284];
+  const yFor=(value,max)=>plotBottom-(value/max)*plotHeight;
+  const fmt=value=>value.toFixed(value>=10?0:1);
+  const grid=Array.from({length:5},(_,index)=>{
+    const fraction=index/4,y=plotBottom-plotHeight*fraction;
+    return `<line x1="38" y1="${y}" x2="314" y2="${y}"/><text class="dual-axis rent-axis" x="34" y="${y+3}" text-anchor="end">${fmt(rentMax*fraction)}</text><text class="dual-axis sale-axis" x="318" y="${y+3}">${fmt(saleMax*fraction)}</text>`;
+  }).join('');
+  const seriesLine=(values,area,areaIndex,kind,max)=>{
+    const coords=values.map((value,index)=>`${xPositions[index]} ${yFor(value,max)}`);
+    const lineClass=`${areaIndex===0?'city':'district'}-${kind}-line`;
+    const points=values.map((value,index)=>`<circle cx="${xPositions[index]}" cy="${yFor(value,max)}" r="3"><title>${area.label} · ${2022+index} ${kind==='rent'?'전세':'매매'} ${value.toFixed(1)}억원</title></circle>`).join('');
+    return `<path class="comparison-line ${lineClass}" d="M${coords.join(' L')}"/><g class="comparison-points ${lineClass}">${points}</g>`;
+  };
+  const lines=areas.map((area,index)=>seriesLine(rentSeries[index],area,index,'rent',rentMax)+seriesLine(saleSeries[index],area,index,'sale',saleMax)).join('');
+  const years=xPositions.map((x,index)=>`<text class="year-label" x="${x}" y="246" text-anchor="middle">${2022+index}</text>`).join('');
+  const scopeLabels='<text class="scope-label" x="170" y="20" text-anchor="middle">2022–2026 연도별 가격 흐름</text>';
+  const svg=document.querySelector('#comparisonTrend');
+  svg.innerHTML=`<text class="comparison-scale rent-axis" x="38" y="44">전세 0–${fmt(rentMax)}억</text><text class="comparison-scale sale-axis" x="314" y="44" text-anchor="end">매매 0–${fmt(saleMax)}억</text>${grid}${scopeLabels}${lines}${years}`;
+  const tableRows=areas.flatMap((area,index)=>[
+    {area:area.label,type:'전세',values:rentSeries[index],key:index===0?'city':'district'},
+    {area:area.label,type:'매매',values:saleSeries[index],key:index===0?'city':'district'}
+  ]);
+  document.querySelector('#trendTableBody').innerHTML=tableRows.map(row=>`<tr><th scope="row"><span class="table-area ${row.key}">${row.area}</span> ${row.type}</th>${row.values.map(value=>`<td>${value.toFixed(1)}</td>`).join('')}</tr>`).join('');
+}
+function updateTrendCards() {
+  if (!geoFeatures.length) return;
+  const city=geoFeatures.map(sampleFor);
+  const districtName=selectedGu===ALL?trendGu:selectedGu;
+  const districtFeatures=geoFeatures.filter(feature=>feature.properties.sggnm===districtName);
+  if(!districtFeatures.length)return;
+  const district=districtFeatures.map(sampleFor);
+  const cityRent=median(city.map(sample=>sample.rent)), citySale=median(city.map(sample=>sample.sale));
+  const districtRent=median(district.map(sample=>sample.rent)), districtSale=median(district.map(sample=>sample.sale));
+  document.querySelector('#cityTrendName').textContent='서울 전체';
+  document.querySelector('#districtTrendName').textContent=districtName;
+  document.querySelector('#cityTrendRent').textContent=cityRent.toFixed(1);
+  document.querySelector('#cityTrendSale').textContent=citySale.toFixed(1);
+  document.querySelector('#districtTrendRent').textContent=districtRent.toFixed(1);
+  document.querySelector('#districtTrendSale').textContent=districtSale.toFixed(1);
+  document.querySelector('#districtRentLegend').textContent=`${districtName} 전세`;
+  document.querySelector('#districtSaleLegend').textContent=`${districtName} 매매`;
+  renderComparisonTrend([
+    {label:'서울 전체',rent:cityRent,sale:citySale},
+    {label:districtName,rent:districtRent,sale:districtSale}
+  ]);
+}
+function color(value) {
+  if (mode === 'sale') return value >= 16 ? '#c77557' : value >= 12 ? '#e0a36b' : value >= 9 ? '#e7cf82' : value >= 7.5 ? '#c9d99b' : '#acd0ad';
+  return value >= 7.5 ? '#c77557' : value >= 6.3 ? '#e0a36b' : value >= 5.2 ? '#e7cf82' : value >= 4 ? '#c9d99b' : '#acd0ad';
+}
+function updateMapLegend() {
+  const ranges=mode==='sale'?['<7.5','7.5–9','9–12','12–16','16+억']:['<4','4–5.2','5.2–6.3','6.3–7.5','7.5+억'];
+  const colors=['#acd0ad','#c9d99b','#e7cf82','#e0a36b','#c77557'];
+  document.querySelector('.gradient').innerHTML=colors.map(value=>`<span style="background:${value}"></span>`).join('');
+  document.querySelector('.ticks').innerHTML=ranges.map(value=>`<span>${value}</span>`).join('');
+}
+function styleDong(feature) {
+  const sample = sampleFor(feature);
+  const selected = feature.properties.sggnm === selectedGu && dongName(feature) === selectedDong;
+  return { color: selected ? '#174b37' : '#fff', weight: selected ? 2.5 : .75, opacity: 1,
+    fillColor: color(valueFor(sample)), fillOpacity: selected ? .9 : .78 };
+}
+function featuresInScope() {
+  return selectedGu === ALL ? geoFeatures : geoFeatures.filter(feature => feature.properties.sggnm === selectedGu);
+}
+function fillDongOptions(gu, preferred = ALL) {
+  const select = document.querySelector('#dong');
+  const features = gu === ALL ? [] : geoFeatures.filter(feature => feature.properties.sggnm === gu);
+  const names = gu === ALL ? [ALL] : [ALL,...features.map(dongName).sort((a,b)=>a.localeCompare(b,'ko'))];
+  select.innerHTML = names.map(name => `<option value="${name}">${name===ALL?'전체 행정동':name}</option>`).join('');
+  select.value = names.includes(preferred) ? preferred : names[0];
+}
+function focusScope() {
+  const features = featuresInScope();
+  if (!features.length) return;
+  map.fitBounds(L.geoJSON({type:'FeatureCollection',features}).getBounds(), {
+    padding:selectedGu===ALL?[4,4]:[15,15],
+    maxZoom:selectedGu===ALL?12.4:13
+  });
+}
+function refreshAreaLabels() {
+  if (!guLabelLayer) return;
+  guLabelLayer.clearLayers();
+  const zoom=map.getZoom();
+  document.querySelectorAll('.dong-label').forEach(label=>{label.style.display=zoom>=12?'':'none'});
+  if(selectedGu!==ALL||zoom>=12)return;
+  const bounds=new Map();
+  const scan=(coords,box)=>{
+    if(typeof coords[0]==='number'){
+      const [lng,lat]=coords;
+      box.minLng=Math.min(box.minLng,lng);box.maxLng=Math.max(box.maxLng,lng);
+      box.minLat=Math.min(box.minLat,lat);box.maxLat=Math.max(box.maxLat,lat);
+      return;
+    }
+    coords.forEach(child=>scan(child,box));
+  };
+  geoFeatures.forEach(feature=>{
+    const gu=feature.properties.sggnm;
+    if(!bounds.has(gu))bounds.set(gu,{minLng:Infinity,maxLng:-Infinity,minLat:Infinity,maxLat:-Infinity});
+    scan(feature.geometry.coordinates,bounds.get(gu));
+  });
+  bounds.forEach((box,gu)=>{
+    const icon=L.divIcon({className:'gu-name-icon',html:`<span class="gu-name">${gu}</span>`,iconSize:[100,20],iconAnchor:[50,10]});
+    L.marker([(box.minLat+box.maxLat)/2,(box.minLng+box.maxLng)/2],{icon,interactive:false,keyboard:false}).addTo(guLabelLayer);
+  });
+}
+function updateSummary() {
+  const inScope = featuresInScope();
+  const selectedFeatures = selectedDong === ALL ? inScope : inScope.filter(feature=>dongName(feature)===selectedDong);
+  const values = (selectedFeatures.length ? selectedFeatures : inScope).map(sampleFor);
+  const rent = median(values.map(value=>value.rent));
+  const sale = median(values.map(value=>value.sale));
+  const pct=factor=>(((1/factor)-1)*100).toFixed(1)+'%';
+  document.querySelector('#statSaleChange').textContent='+'+pct(fiveYearFactors.sale);
+  document.querySelector('#statJeonseChange').textContent='+'+pct(fiveYearFactors.jeonse);
+  document.querySelector('#statRentChange').textContent='+'+pct(fiveYearFactors.rent);
+  document.querySelector('#statJeonseRatio').textContent=fiveYearRatio(rent,sale).toFixed(1)+'%';
+  renderSummaryTables(rent,sale);
+  document.querySelector('.map-label b').textContent = selectedGu === ALL ? '서울특별시 · 426개 행정동' : `서울특별시 · ${selectedGu}`;
+  renderLivingZoneMap();
+}
+function renderSummaryTables(rent,sale) {
+  const years=[2022,2023,2024,2025,2026];
+  const header=years.map(year=>`<th scope="col">${year}</th>`).join('');
+  const changeRows=[['매매가',annualPriceFactors.sale],['전세가',annualPriceFactors.jeonse],['월세가',annualPriceFactors.rent]];
+  const changeBody=changeRows.map(([label,factors])=>{
+    const cells=factors.map((factor,index)=>index===0?'<td>기준</td>':`<td>${factor/factors[index-1]>=1?'+':''}${((factor/factors[index-1]-1)*100).toFixed(1)}%</td>`).join('');
+    return `<tr><th scope="row">${label}</th>${cells}</tr>`;
+  }).join('');
+  document.querySelector('#cumulativeChangeTable').innerHTML=`<thead><tr><th></th>${header}</tr></thead><tbody>${changeBody}</tbody>`;
+  const ratioCells=annualPriceFactors.jeonse.map((factor,index)=>`<td>${(rent*factor/(sale*annualPriceFactors.sale[index])*100).toFixed(1)}%</td>`).join('');
+  document.querySelector('#jeonseRatioTable').innerHTML=`<thead><tr><th></th>${header}</tr></thead><tbody><tr><th scope="row">전세가율</th>${ratioCells}</tr></tbody>`;
+}
+function fiveYearRatio(rent,sale) {
+  const rents=annualPriceFactors.jeonse,sales=annualPriceFactors.sale;
+  return rents.reduce((sum,factor,index)=>sum+(rent*factor)/(sale*sales[index]),0)/rents.length*100;
+}
+function renderLivingZoneMap() {
+  if(!geoFeatures.length)return;
+  const bounds={minLng:Infinity,maxLng:-Infinity,minLat:Infinity,maxLat:-Infinity};
+  const scan=(coords,visit)=>{if(typeof coords[0]==='number'){visit(coords);return}coords.forEach(child=>scan(child,visit))};
+  geoFeatures.forEach(feature=>scan(feature.geometry.coordinates,([lng,lat])=>{bounds.minLng=Math.min(bounds.minLng,lng);bounds.maxLng=Math.max(bounds.maxLng,lng);bounds.minLat=Math.min(bounds.minLat,lat);bounds.maxLat=Math.max(bounds.maxLat,lat)}));
+  const pad=18, width=500, scale=(width-pad*2)/(bounds.maxLng-bounds.minLng), height=(bounds.maxLat-bounds.minLat)*scale+pad*2;
+  const project=([lng,lat])=>[pad+(lng-bounds.minLng)*scale,height-pad-(lat-bounds.minLat)*scale];
+  const zoneMap=document.querySelector('#livingZoneMap');
+  zoneMap.setAttribute('viewBox',`0 0 ${width} ${height.toFixed(1)}`);
+  const zoneInfo=Object.entries(livingZones).map(([name,districts])=>{
+    const features=geoFeatures.filter(feature=>districts.includes(feature.properties.sggnm));
+    const samples=features.map(sampleFor), rent=median(samples.map(sample=>sample.rent)), sale=median(samples.map(sample=>sample.sale)), ratio=fiveYearRatio(rent,sale)/100;
+    const points=[];
+    features.forEach(feature=>scan(feature.geometry.coordinates,coordinate=>points.push(coordinate)));
+    const center=points.reduce((sum,point)=>[sum[0]+point[0]/points.length,sum[1]+point[1]/points.length],[0,0]);
+    return {name,districts,features,rent,sale,ratio,center};
+  });
+  const zoneHeader=[2022,2023,2024,2025,2026].map(year=>`<th scope="col">${year}</th>`).join('');
+  const zoneRows=zoneInfo.map(zone=>{
+    const cells=annualPriceFactors.jeonse.map((factor,index)=>`<td>${(zone.rent*factor/(zone.sale*annualPriceFactors.sale[index])*100).toFixed(1)}%</td>`).join('');
+    return `<tr><th scope="row">${zone.name}</th>${cells}</tr>`;
+  }).join('');
+  document.querySelector('#livingZoneTable').innerHTML=`<thead><tr><th></th>${zoneHeader}</tr></thead><tbody>${zoneRows}</tbody>`;
+  const rates=zoneInfo.map(zone=>zone.ratio), min=Math.min(...rates), max=Math.max(...rates);
+  const stops=['#dcebd3','#efd28c','#dc9863','#c86c5b'];
+  const colorFor=ratio=>{
+    const t=max===min ? .5 : (ratio-min)/(max-min), scaled=t*(stops.length-1), index=Math.min(stops.length-2,Math.floor(scaled)), local=scaled-index;
+    const a=stops[index].match(/[\da-f]{2}/gi).map(v=>parseInt(v,16)),b=stops[index+1].match(/[\da-f]{2}/gi).map(v=>parseInt(v,16));
+    return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*local).toString(16).padStart(2,'0')).join('');
+  };
+  const svgPath=feature=>{
+    const polygons=feature.geometry.type==='Polygon'?[feature.geometry.coordinates]:feature.geometry.coordinates;
+    return polygons.flatMap(polygon=>polygon.map(ring=>ring.map((point,index)=>{const [x,y]=project(point);return (index?'L':'M')+x.toFixed(1)+','+y.toFixed(1)}).join(' ')+'Z')).join('');
+  };
+  const paths=zoneInfo.flatMap(zone=>zone.features.map(feature=>`<path d="${svgPath(feature)}" fill="${colorFor(zone.ratio)}"><title>${zone.name} · ${zone.ratio.toFixed(1)}%</title></path>`)).join('');
+  const labels=zoneInfo.map(zone=>{
+    const [px,py]=project(zone.center);
+    return `<text x="${px.toFixed(1)}" y="${(py-3).toFixed(1)}"><tspan class="zone-name" x="${px.toFixed(1)}">${zone.name}</tspan><tspan class="zone-rate" x="${px.toFixed(1)}" dy="14">${zone.ratio.toFixed(1)}%</tspan></text>`;
+  }).join('');
+  document.querySelector('#livingZoneMap').innerHTML=paths+labels;
+}
+function render() {
+  if (!districtLayer) return;
+  districtLayer.setStyle(styleDong);
+  const rows = selectedGu===ALL
+    ? [...new Set(geoFeatures.map(feature=>feature.properties.sggnm))].map(gu=>{
+        const features=geoFeatures.filter(feature=>feature.properties.sggnm===gu);
+        return {feature:features[0],gu,name:gu,aggregate:true,sample:{rent:median(features.map(feature=>sampleFor(feature).rent)),sale:median(features.map(feature=>sampleFor(feature).sale))}};
+      })
+    : featuresInScope().map(feature=>({feature,gu:feature.properties.sggnm,name:dongName(feature),aggregate:false,sample:sampleFor(feature)}));
+  rows.sort((a,b)=>descending?valueFor(b.sample)-valueFor(a.sample):valueFor(a.sample)-valueFor(b.sample));
+  const maxValue=Math.max(...rows.map(({sample})=>valueFor(sample)),1);
+  const chartWidth=Math.max(list.clientWidth,1),axisMax=Math.max(1,Math.ceil(maxValue*1.2/2)*2), plotTop=30, plotBottom=210, plotHeight=plotBottom-plotTop, startX=58, endX=Math.max(startX+1,chartWidth-12), stepX=(endX-startX)/Math.max(rows.length,1), barWidth=Math.max(1,Math.min(30,stepX*.66));
+  const maxLabels=Math.max(1,Math.floor((endX-startX)/42)),labelEvery=Math.max(1,Math.ceil(rows.length/maxLabels));
+  const grid=Array.from({length:5},(_,index)=>{
+    const fraction=index/4,y=plotBottom-plotHeight*fraction,value=axisMax*fraction;
+    return `<line class="bar-grid" x1="${startX-8}" y1="${y}" x2="${endX}" y2="${y}"/><text class="bar-axis-tick" x="${startX-14}" y="${y+3}" text-anchor="end">${value.toFixed(axisMax>=10?0:1)}</text>`;
+  }).join('');
+  const bars=rows.map(({feature,sample,gu,name,aggregate},index)=>{
+    const value=valueFor(sample),x=startX+stepX*(index+.5),barHeight=value/axisMax*plotHeight,y=plotBottom-barHeight;
+    const safeGu=gu.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    const safeName=name.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    const showLabel=index%labelEvery===0||index===rows.length-1;
+    return `<g class="bar-column${selectedGu===gu&&selectedDong===name?' selected':''}" data-gu="${safeGu}" data-dong="${safeName}" data-aggregate="${aggregate}" tabindex="0" role="button" aria-label="${index+1}위 ${safeGu} ${safeName}, ${value.toFixed(1)}억원"><title>${index+1}위 · ${safeGu} ${safeName} · ${value.toFixed(1)}억원</title><rect x="${x-barWidth/2}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${color(value)}"/><text class="bar-value" x="${x}" y="${Math.max(22,y-5)}" text-anchor="middle">${stepX<24?'':value.toFixed(1)}</text>${showLabel?(aggregate?`<text class="bar-category" x="${x}" y="239" text-anchor="middle">${safeGu}</text>`:`<text class="bar-gu" x="${x}" y="230" text-anchor="middle">${safeGu}</text><text class="bar-dong" x="${x}" y="245" text-anchor="middle">${safeName}</text>`):''}${showLabel?`<text class="bar-rank" x="${x}" y="263" text-anchor="middle">${String(index+1).padStart(2,'0')}</text>`:''}</g>`;
+  }).join('');
+  list.innerHTML=`<svg class="area-bar-chart" width="${chartWidth}" height="286" viewBox="0 0 ${chartWidth} 286" role="img" aria-label="자치구 및 행정동별 ${mode==='sale'?'매매가':'전세 가격'} 막대그래프"><text class="bar-axis-title" transform="translate(13 ${plotTop+plotHeight/2}) rotate(-90)" text-anchor="middle">가격 (억원)</text>${grid}${bars}<text class="bar-x-title" x="${(startX+endX)/2}" y="282" text-anchor="middle">${selectedGu===ALL?'자치구':'행정동'} · ${descending?'가격 높은':'가격 낮은'} 순</text></svg>`;
+  list.querySelectorAll('.bar-column').forEach(column=>{
+    const selectArea=()=>{
+      if(column.dataset.aggregate==='true'){choose(column.dataset.gu,ALL,false);focusScope()}
+      else choose(column.dataset.gu,column.dataset.dong,true);
+    };
+    column.addEventListener('click',selectArea);
+    column.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectArea()}});
+  });
+  document.querySelector('#legendName').textContent=mode==='sale'?'매매가':mode==='rent'?'월세 환산액':'전세 보증금';
+  updateMapLegend();
+  document.querySelector('.side-sub').textContent=selectedGu===ALL?`서울시 25개 자치구 · 구별 중앙값 · 시안 예시값`:`${selectedGu} · ${rows.length}개 행정동 · 시안 예시값`;
+  updateTrendCards();
+  updateSummary();
+  refreshAreaLabels();
+}
+function choose(gu,name,zoom=false) {
+  selectedGu=gu; selectedDong=name;
+  if(gu!==ALL)trendGu=gu;
+  document.querySelector('#gu').value=gu;
+  fillDongOptions(gu,name);
+  updateSummary(); render();
+  if(zoom){if(name===ALL)focusScope();else{const feature=geoFeatures.find(item=>item.properties.sggnm===gu&&dongName(item)===name);if(feature)map.fitBounds(L.geoJSON(feature).getBounds(),{padding:[35,35],maxZoom:14})}}
+}
+
+fetch('/data/seoul-admdong.geojson').then(r=>r.json()).then(data=>{
+  geoFeatures=data.features;
+  geoFeatures.forEach((feature,index)=>{
+    let hash=2166136261; for(const char of feature.properties.adm_cd2) hash=Math.imul(hash^char.charCodeAt(0),16777619);
+    const wobble=((hash>>>0)%1000)/1000-.5, base=baselines[feature.properties.sggnm]||[4.5,9];
+    sampleByCode.set(feature.properties.adm_cd2,{rent:Math.max(2.8,base[0]+wobble*1.2),sale:Math.max(5,base[1]+wobble*2.4)});
+  });
+  const districts=[ALL,...new Set(geoFeatures.map(feature=>feature.properties.sggnm))].sort((a,b)=>a===ALL?-1:b===ALL?1:a.localeCompare(b,'ko'));
+  const guSelect=document.querySelector('#gu');guSelect.innerHTML=districts.map(name=>`<option>${name}</option>`).join('');guSelect.value=ALL;fillDongOptions(ALL,ALL);
+  districtLayer=L.geoJSON(data,{style:styleDong,onEachFeature:(feature,layer)=>{
+    const gu=feature.properties.sggnm,name=dongName(feature),sample=sampleFor(feature);
+    layer.bindPopup(`<b>${gu} ${name}</b><br>${mode==='sale'?'매매가':'전세 보증금'} ${valueFor(sample).toFixed(1)}억원 · 시안 예시`);
+    layer.bindTooltip(name,{permanent:true,direction:'center',className:'dong-label'});
+    layer.on('click',()=>choose(gu,name,true));
+  }}).addTo(map);
+  guLabelLayer=L.layerGroup().addTo(map);
+  map.on('zoomend',refreshAreaLabels);
+  refreshAreaLabels();
+  focusScope();render();
+});
+document.querySelectorAll('.segmented button').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('.segmented button').forEach(item=>item.classList.remove('active'));
+  button.classList.add('active');mode=button.dataset.mode;
+  render();
+});
+document.querySelector('#sort').onclick=()=>{descending=!descending;document.querySelector('#sort').textContent=descending?'1위부터 정렬 ↓':'가격 낮은 순 ↑';render()};
+document.querySelector('#gu').onchange=event=>{
+  selectedGu=event.target.value;selectedDong=selectedGu===ALL?ALL:'';fillDongOptions(selectedGu,selectedDong);
+  selectedDong=document.querySelector('#dong').value;updateSummary();render();focusScope();
+};
+document.querySelector('#dong').onchange=event=>choose(selectedGu,event.target.value,true);
+window.addEventListener('resize',()=>{render();map.invalidateSize()});</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
